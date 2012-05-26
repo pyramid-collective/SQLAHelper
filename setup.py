@@ -15,6 +15,8 @@ requires = [
 
 tests_require = [
     "transaction",
+    "nose",
+    "coverage",
     ]
 
 entry_points = """
@@ -33,12 +35,17 @@ setup(name='SQLAHelper',
       keywords='',
       author="Mike Orr",
       author_email="sluggoster@gmail.com",
+      maintainer='Atsushi Odagiri',
+      maintainer_email='aodagx@gmail.com',
       url="https://github.com/Pyramid/SQLAHelper",
       license="MIT",
       py_modules=["sqlahelper"],
       include_package_data=True,
       zip_safe=False,
       tests_require=tests_require,
+      extras_require={
+        'testing': tests_require,
+      },
       install_requires = requires,
       test_suite="sqlahelper",
       entry_points=entry_points,
