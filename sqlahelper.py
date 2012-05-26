@@ -1,3 +1,4 @@
+import re
 import sqlalchemy as sa
 import sqlalchemy.ext.declarative as declarative
 import sqlalchemy.orm as orm
@@ -5,6 +6,60 @@ from zope.sqlalchemy import ZopeTransactionExtension
 
 # Import only version 1 API with "import *"
 __all__ = ["add_engine", "get_base", "get_session", "get_engine"]
+
+# pyramid configuration
+
+truthy = frozenset(['true', 'yes', 'on', 'y', 't', '1'])
+falsy = frozenset(['false', 'no', 'off', 'n', 'f', '0'])
+
+def asbool(obj):
+    if isinstance(obj, basestring):
+        obj = obj.strip().lower()
+        if obj in truthy:
+            return True
+        elif obj in falsy:
+            return False
+        else:
+            raise ValueError("String is not true/false: %r" % obj)
+    return bool(obj)
+
+engine_url_pattern = re.compile(r'sqlahelper\.(?P<engine_name>\w+)\.url')
+engine_echo_pattern = re.compile(r'sqlahelper\.(?P<engine_name>\w+)\.echo')
+
+def includeme(config):
+    """ set up engines from config.
+
+    usege in :term:`Pyramid`::
+
+      config.include('sqlahelper')
+
+    config.ini::
+
+        sqlalchemy.url = sqlite:///%(here)s/myapp.db
+        sqlahelper.otherengine.url = sqlite:///%(here)s/myapp_other.db
+
+    ``sqlalchemy.url`` is set to default engine.
+    ``sqlahelper.otherengine.url`` is set to engine named "otherengine".
+
+    """
+
+    settings = config.registry.settings
+    if 'sqlalchemy.url' in settings:
+        engine = sa.engine_from_config(settings)
+        set_default_engine(engine)
+
+    for k, v in settings.items():
+        url_match = engine_url_pattern.match(k)
+        if url_match:
+            engine_name = url_match.groupdict()['engine_name']
+            engine = sa.create_engine(v)
+            setattr(engines, engine_name, engine)
+        echo_match = engine_echo_pattern.match(k)
+        if echo_match:
+            engine_name = echo_match.groupdict()['engine_name']
+            if not hasattr(engines, engine_name):
+                continue
+            setattr(getattr(engines, engine_name), "echo", asbool(v))
 
 # VERSION 2 API
 

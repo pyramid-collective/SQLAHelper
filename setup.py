@@ -15,6 +15,7 @@ requires = [
 
 tests_require = [
     "transaction",
+    "pyramid",
     "nose",
     "coverage",
     ]

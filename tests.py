@@ -166,6 +166,48 @@ class TestSetBase(SQLAHelperTestCase):
             self.assertNotEqual(base2, base)
             self.assertEqual(base2, my_base)
 
+class IncludeMeTests(unittest.TestCase):
+    def setUp(self):
+        from pyramid import testing
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        from pyramid import testing
+        testing.tearDown()
+
+    def _callFUT(self, *args, **kwargs):
+        from sqlahelper import includeme
+        return includeme(*args, **kwargs)
+
+    def test_default_engine(self):
+        engine_settings = {
+            'sqlalchemy.url': 'sqlite:///',
+            'sqlalchemy.echo': 'true',
+        }
+        self.config.registry.settings.update(engine_settings)
+
+        self._callFUT(self.config)
+
+        import sqlahelper
+
+        self.assertIsNotNone(sqlahelper.engines.default)
+        self.assertEqual(str(sqlahelper.engines.default.url), 'sqlite:///')
+        self.assertTrue(sqlahelper.engines.default.echo)
+
+    def test_another_engines(self):
+        engine_settings = {
+            'sqlahelper.other.url': 'sqlite:///',
+            'sqlahelper.other.echo': 'true',
+            }
+        self.config.registry.settings.update(engine_settings)
+
+        self._callFUT(self.config)
+
+        import sqlahelper
+
+        self.assertIsNotNone(sqlahelper.engines.other)
+        self.assertEqual(str(sqlahelper.engines.other.url), 'sqlite:///')
+        self.assertTrue(sqlahelper.engines.other.echo)
 
 if __name__ == "__main__":
     unittest.main()
